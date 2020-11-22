@@ -1,19 +1,19 @@
 package tech.tohkatsu.cansat
 
-import com.fazecast.jSerialComm.SerialPort
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
-import javafx.scene.control.Button
-import javafx.scene.control.ChoiceBox
-import javafx.scene.control.TextArea
-import javafx.scene.control.TextField
+import javafx.scene.control.*
+import javafx.scene.text.TextFlow
 import java.net.URL
 import java.util.*
 
 class MainController : Initializable {
 
     @FXML
-    lateinit var area_prompt: TextArea
+    lateinit var scrollpane_prompt: ScrollPane
+
+    @FXML
+    lateinit var flow_prompt: TextFlow
 
     @FXML
     lateinit var field_px: TextField
@@ -36,7 +36,14 @@ class MainController : Initializable {
     @FXML
     lateinit var button_update_port: Button
 
+    //option start
+
     @FXML
+    lateinit var slider_fontsize: Slider
+
+
+    @FXML
+    @ExperimentalUnsignedTypes
     fun onUpdatePorts() {
         CansatSerialUtil.instance.updatePorts()
     }

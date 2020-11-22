@@ -1,0 +1,15 @@
+
+#prompt {
+
+    -fx-fit-to-width: true;
+    -fx-fit-to-height: true;
+    -fx-background-color: black;
+
+}
+
+#prompt_background {
+
+    -fx-fit-to-width: true;
+    -fx-fit-to-height: true;
+
+}

@@ -24,4 +24,5 @@ Sorry to say, the format is little ugly because one value uses 5 bytes.<br>
 |0x02|Float|
 
 # Compile in your computer
-To compile this, you should add `lib` folder and put `jSerialComm-2.6.2.jar`.
+To compile this, you should add `lib` folder and put `jSerialComm-2.6.2.jar`.<br>
+refer: https://fazecast.github.io/jSerialComm/
