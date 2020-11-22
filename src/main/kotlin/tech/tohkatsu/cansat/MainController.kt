@@ -31,15 +31,26 @@ class MainController : Initializable {
     lateinit var button_send: Button
 
     @FXML
-    lateinit var choicebox_port: ChoiceBox<SerialPortHolder>
+    lateinit var choicebox_port: ChoiceBox<String>
 
     @FXML
     lateinit var button_update_port: Button
+
+    @FXML
+    fun onUpdatePorts() {
+        CansatSerialUtil.instance.updatePorts()
+    }
+
+    @FXML
+    fun onSend() {
+
+
+
+    }
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
 
 
     }
-
 }

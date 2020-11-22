@@ -12,7 +12,7 @@
 
 <SplitPane dividerPositions="0.5" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tech.tohkatsu.cansat.MainController">
    <items>
-      <TextArea fx:id="area_prompt" prefHeight="200.0" prefWidth="200.0" />
+      <TextArea fx:id="area_prompt" editable="false" prefHeight="200.0" prefWidth="200.0" />
       <GridPane>
         <columnConstraints>
           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
@@ -27,13 +27,13 @@
         </rowConstraints>
          <children>
             <TextField fx:id="field_send" GridPane.rowIndex="2" />
-            <Button fx:id="button_send" mnemonicParsing="false" text="send" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <Button fx:id="button_send" mnemonicParsing="false" onAction="#onSend" text="send" GridPane.columnIndex="1" GridPane.rowIndex="2" />
             <ChoiceBox fx:id="choicebox_port" disable="true" prefWidth="150.0" GridPane.rowIndex="1" />
             <TextField fx:id="field_py" editable="false" promptText="y" GridPane.columnIndex="2" />
             <TextField fx:id="field_pz" editable="false" promptText="z" GridPane.columnIndex="3" />
             <TextField fx:id="field_px" editable="false" promptText="x" GridPane.columnIndex="1" />
             <Label text="Position:" />
-            <Button fx:id="button_update_port" mnemonicParsing="false" text="Update Ports" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Button fx:id="button_update_port" mnemonicParsing="false" onAction="#onUpdatePorts" text="Update Ports" GridPane.columnIndex="1" GridPane.rowIndex="1" />
          </children>
       </GridPane>
    </items>
