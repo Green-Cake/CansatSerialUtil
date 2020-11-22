@@ -1,0 +1,32 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.4.20'
+    id "org.openjfx.javafxplugin" version "0.0.8"
+}
+
+group = 'tech.tohkatsu'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
+}
+
+dependencies {
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '12'
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '12'
+}
+
+javafx {
+    version = "13"
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
