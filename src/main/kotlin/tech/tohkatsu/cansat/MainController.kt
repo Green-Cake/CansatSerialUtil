@@ -28,7 +28,13 @@ class MainController : Initializable {
     lateinit var field_send: TextField
 
     @FXML
-    lateinit var button_send: Button
+    lateinit var button_bar_send: ButtonBar
+
+    @FXML
+    lateinit var button_send_alpha: Button
+
+    @FXML
+    lateinit var button_send_beta: Button
 
     @FXML
     lateinit var choicebox_port: ChoiceBox<String>
@@ -41,6 +47,9 @@ class MainController : Initializable {
     @FXML
     lateinit var slider_fontsize: Slider
 
+    @FXML
+    lateinit var color_picker_prompt_back: ColorPicker
+
 
     @FXML
     @ExperimentalUnsignedTypes
@@ -49,10 +58,15 @@ class MainController : Initializable {
     }
 
     @FXML
-    fun onSend() {
+    @ExperimentalUnsignedTypes
+    fun onSendAlpha() {
+        CansatSerialUtil.instance.sendTo(Address.ALPHA, field_send.text)
+    }
 
-
-
+    @FXML
+    @ExperimentalUnsignedTypes
+    fun onSendBeta() {
+        CansatSerialUtil.instance.sendTo(Address.BETA, field_send.text)
     }
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {

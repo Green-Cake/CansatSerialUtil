@@ -4,12 +4,18 @@ import com.fazecast.jSerialComm.SerialPort
 import javafx.animation.AnimationTimer
 import javafx.application.Application
 import javafx.fxml.FXMLLoader
+import javafx.geometry.Insets
 import javafx.scene.Scene
+import javafx.scene.layout.Background
+import javafx.scene.layout.BackgroundFill
+import javafx.scene.layout.CornerRadii
 import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import javafx.scene.text.Text
 import javafx.stage.Stage
+import java.util.*
+import kotlin.collections.ArrayList
 
 @ExperimentalUnsignedTypes
 class CansatSerialUtil : Application() {
@@ -33,37 +39,44 @@ class CansatSerialUtil : Application() {
     inner class Prompt {
 
         var latestFontSize = 15.0
+        var latestNormalFill = Color.BLACK
+
+        private fun prefixInfo(calendar: Calendar = Calendar.getInstance()) =
+            "[${calendar.get(Calendar.HOUR_OF_DAY)}:${calendar.get(Calendar.MINUTE)}:${calendar.get(Calendar.SECOND)}:${calendar.get(Calendar.MILLISECOND)}] "
 
         fun updateFontSize(size: Double) {
 
-            val prev = latestFontSize
             latestFontSize = size
-            controller.flow_prompt.children.forEach {
+            controller.flow_prompt.children.filterIsInstance<Text>().forEach {
 
-                if(it is Text)
-                    it.font = Font.font(it.font.family, latestFontSize)
+                it.font = Font.font(it.font.family, latestFontSize)
 
             }
 
         }
 
-        fun warning(text: String) {
+        fun updateNormalFill(fill: Color) {
 
-            controller.flow_prompt.children += Text(text).apply {
-                fill = Color.DARKRED
+            latestNormalFill = fill
+            controller.flow_prompt.children.filterIsInstance<Text>().forEach {
+                    it.fill = latestNormalFill
+
+            }
+
+        }
+
+        fun print(text: String, color: Color) {
+
+            controller.flow_prompt.children += Text(prefixInfo()+text).apply {
+                fill = color
                 font = Font.font(latestFontSize)
             }
 
         }
 
-        fun print(text: String) {
+        fun warning(text: String) = print(text, Color.RED)
 
-            controller.flow_prompt.children += Text(text).apply {
-                fill = Color.GREEN
-                font = Font.font(latestFontSize)
-            }
-
-        }
+        fun print(text: String) = print(text, latestNormalFill)
 
         fun warningln(text: String) = warning(text+"\n")
 
@@ -127,21 +140,21 @@ class CansatSerialUtil : Application() {
         if(ports.size > 1)
             prompt.println("Found ports number: ${ports.size}")
         else
-            prompt.warningln("No ports found!")
+            prompt.warningln("No ports found! press \"Update Ports\" button to recheck available ports.")
 
         controller.choicebox_port.items.clear()
 
         if(ports.size > 1) {
 
             controller.choicebox_port.isDisable = false
-            controller.button_send.isDisable = false
+            controller.button_bar_send.isDisable = false
 
             controller.choicebox_port.items.addAll(ports.keys)
 
         } else {
 
             controller.choicebox_port.isDisable = true
-            controller.button_send.isDisable = true
+            controller.button_bar_send.isDisable = true
 
             controller.choicebox_port.items.add("NO PORTS FOUND") // be careful!
             controller.choicebox_port.value = "NO PORTS FOUND"
@@ -162,7 +175,54 @@ class CansatSerialUtil : Application() {
 
     }
 
-    fun onSend() {
+    fun sendTo(address: Address, raw: String) {
+
+        val data = mutableListOf<UByte>()
+
+        raw.split(',').forEach {
+
+            val trimmed = it.trim()
+
+            data += try {
+                if(trimmed.startsWith("0x"))
+                    trimmed.drop(2).toUByte(16)
+                else
+                    trimmed.toUByte()
+            } catch (e: Throwable) {
+                return@forEach
+            }
+
+        }
+
+        sendTo(address, data)
+
+    }
+
+    fun sendTo(address: Address, data: List<UByte>) {
+
+        if(selectedPort == null)
+            return
+
+        if(data.size > 0xFF) {
+            prompt.warningln("Can't send it! it's too large to send. It must be lower than 256")
+            return
+        }
+
+        val q = mutableListOf(address.value, byte(0xA0u), byte(0x34u), byte(0x07u), byte(0xFFu))
+
+        q.addAll(data)
+
+        val checksum = xorChecksum(q)
+
+        val r = mutableListOf(byte(0xA5u), byte(0x5Au), byte(0x80u))
+
+        r += q.size.toUByte()
+
+        r.addAll(q)
+
+        r += checksum
+
+        selectedPort!!.writeBytes(r.map { it.toByte() }.toByteArray(), r.size.toLong())
 
     }
 
@@ -210,6 +270,10 @@ class CansatSerialUtil : Application() {
 
         if(controller.slider_fontsize.value != prompt.latestFontSize)
             prompt.updateFontSize(controller.slider_fontsize.value)
+
+        controller.flow_prompt.background = Background(BackgroundFill(controller.color_picker_prompt_back.value, CornerRadii.EMPTY, Insets.EMPTY))
+
+        prompt.updateNormalFill(controller.color_picker_prompt_back.value.invert())
 
         //
 
