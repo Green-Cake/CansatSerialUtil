@@ -1,26 +1,29 @@
 package tech.tohkatsu.cansat
 
 import com.fazecast.jSerialComm.SerialPort
+import com.google.gson.Gson
 import javafx.animation.AnimationTimer
 import javafx.application.Application
 import javafx.fxml.FXMLLoader
-import javafx.geometry.Insets
 import javafx.scene.Scene
-import javafx.scene.layout.Background
-import javafx.scene.layout.BackgroundFill
-import javafx.scene.layout.CornerRadii
 import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
-import javafx.scene.text.Font
-import javafx.scene.text.Text
 import javafx.stage.Stage
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 import java.util.*
+import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
 import kotlin.collections.ArrayList
 
 @ExperimentalUnsignedTypes
 class CansatSerialUtil : Application() {
 
     companion object {
+
+        const val STYLE_NORMAL = "normal"
+        const val STYLE_WARNING = "warning"
 
         //----- unused now...
         val dataFormat = listOf(
@@ -32,57 +35,20 @@ class CansatSerialUtil : Application() {
 
         const val BAUD_RATE = 115200
 
+        val pathOptionsFile = Paths.get("./options.json")
+
+        val defaultConfig: Config = Config(
+            "0x1a1a1aff",
+            "0xffffffff",
+            "0xff0000ff",
+            18.0
+        )
+
         lateinit var instance: CansatSerialUtil
 
     }
 
-    inner class Prompt {
-
-        var latestFontSize = 15.0
-        var latestNormalFill = Color.BLACK
-
-        private fun prefixInfo(calendar: Calendar = Calendar.getInstance()) =
-            "[${calendar.get(Calendar.HOUR_OF_DAY)}:${calendar.get(Calendar.MINUTE)}:${calendar.get(Calendar.SECOND)}:${calendar.get(Calendar.MILLISECOND)}] "
-
-        fun updateFontSize(size: Double) {
-
-            latestFontSize = size
-            controller.flow_prompt.children.filterIsInstance<Text>().forEach {
-
-                it.font = Font.font(it.font.family, latestFontSize)
-
-            }
-
-        }
-
-        fun updateNormalFill(fill: Color) {
-
-            latestNormalFill = fill
-            controller.flow_prompt.children.filterIsInstance<Text>().forEach {
-                    it.fill = latestNormalFill
-
-            }
-
-        }
-
-        fun print(text: String, color: Color) {
-
-            controller.flow_prompt.children += Text(prefixInfo()+text).apply {
-                fill = color
-                font = Font.font(latestFontSize)
-            }
-
-        }
-
-        fun warning(text: String) = print(text, Color.RED)
-
-        fun print(text: String) = print(text, latestNormalFill)
-
-        fun warningln(text: String) = warning(text+"\n")
-
-        fun println(text: String) = print(text+"\n")
-
-    }
+    private val gson = Gson()
 
     val ports = mutableMapOf<String, SerialPort>()
 
@@ -98,7 +64,7 @@ class CansatSerialUtil : Application() {
 
     var buf = mutableListOf<UByte>()
 
-    val prompt = Prompt()
+    val prompt = Prompt(this)
 
     override fun start(stage: Stage) {
 
@@ -108,11 +74,19 @@ class CansatSerialUtil : Application() {
 
         stage.title = TITLE
 
+        stage.setOnCloseRequest {
+
+            saveOptions()
+
+        }
+
         val loader = FXMLLoader(ClassLoader.getSystemResource("tech/tohkatsu/cansat/main.fxml"))
 
         stage.scene = Scene(loader.load<Pane>())
 
         controller = loader.getController()
+
+        loadOptions()
 
         //
 
@@ -266,14 +240,19 @@ class CansatSerialUtil : Application() {
 
     fun byte(int: UInt) = int.toUByte()
 
+    fun updatePrompt() {
+        prompt.updateFontSize(controller.slider_fontsize.value)
+
+        prompt.updateColor(
+            controller.color_picker_prompt_back.value,
+            controller.color_picker_prompt_text.value,
+            controller.color_picker_prompt_warning_text.value
+        )
+    }
+
     fun loop() {
 
-        if(controller.slider_fontsize.value != prompt.latestFontSize)
-            prompt.updateFontSize(controller.slider_fontsize.value)
-
-        controller.flow_prompt.background = Background(BackgroundFill(controller.color_picker_prompt_back.value, CornerRadii.EMPTY, Insets.EMPTY))
-
-        prompt.updateNormalFill(controller.color_picker_prompt_back.value.invert())
+        updatePrompt()
 
         //
 
@@ -319,6 +298,36 @@ class CansatSerialUtil : Application() {
 
             }
 
+        }
+
+    }
+
+    fun loadOptions() {
+
+        val config: Config = try {
+            gson.fromJson(Files.newBufferedReader(pathOptionsFile), Config::class.java)
+        } catch (e: Throwable) {
+            defaultConfig
+        }
+
+        controller.applyConfig(config)
+
+    }
+
+    fun saveOptions() {
+
+        val config = Config(
+            controller.color_picker_prompt_back.value.toString(),
+            controller.color_picker_prompt_text.value.toString(),
+            controller.color_picker_prompt_warning_text.value.toString(),
+            controller.slider_fontsize.value
+        )
+
+        if(Files.notExists(pathOptionsFile))
+            Files.createFile(pathOptionsFile)
+
+        Files.newOutputStream(pathOptionsFile, StandardOpenOption.WRITE).use {
+            it.write(gson.toJson(config).toByteArray())
         }
 
     }

@@ -1,9 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.TextFlow?>
+
 <SplitPane dividerPositions="0.8" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="768.0" prefWidth="1024.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tech.tohkatsu.cansat.MainController">
    <items>
       <TabPane>
@@ -36,6 +51,15 @@
                               <Slider fx:id="slider_fontsize" blockIncrement="5.0" majorTickUnit="10.0" max="50.0" min="10.0" showTickLabels="true" showTickMarks="true" value="18.0" />
                               <Label text="Prompt Background Color" />
                               <ColorPicker fx:id="color_picker_prompt_back" editable="true" />
+                              <Label text="Prompt Text Color" />
+                              <ColorPicker fx:id="color_picker_prompt_text" editable="true" />
+                              <Label text="Prompt Warning Text Color" />
+                              <ColorPicker fx:id="color_picker_prompt_warning_text" editable="true" />
+                              <Button fx:id="button_reset" contentDisplay="CENTER" mnemonicParsing="false" onAction="#onReset" text="Reset" textAlignment="CENTER" textFill="#ff3d00" underline="true">
+                                 <VBox.margin>
+                                    <Insets top="30.0" />
+                                 </VBox.margin>
+                              </Button>
                            </children>
                            <padding>
                               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
