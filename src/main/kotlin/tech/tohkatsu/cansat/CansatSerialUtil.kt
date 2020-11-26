@@ -5,17 +5,22 @@ import com.google.gson.Gson
 import javafx.animation.AnimationTimer
 import javafx.application.Application
 import javafx.fxml.FXMLLoader
-import javafx.scene.Scene
-import javafx.scene.layout.Pane
+import javafx.scene.*
+import javafx.scene.input.KeyCode
 import javafx.scene.paint.Color
+import javafx.scene.shape.Box
 import javafx.stage.Stage
+import javafx.stage.StageStyle
+import org.fxyz3d.geometry.Point3D
+import org.fxyz3d.shapes.composites.PolyLine3D
+import org.fxyz3d.utils.CameraTransformer
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.*
-import java.util.jar.JarFile
-import java.util.jar.JarOutputStream
 import kotlin.collections.ArrayList
+import kotlin.random.Random
+import kotlin.random.nextUInt
 
 @ExperimentalUnsignedTypes
 class CansatSerialUtil : Application() {
@@ -27,7 +32,7 @@ class CansatSerialUtil : Application() {
 
         //----- unused now...
         val dataFormat = listOf(
-            DataType.FLOAT /* elapsed time */,
+            DataType.FLOAT, /* elapsed time */
         )
         //-----
 
@@ -41,7 +46,7 @@ class CansatSerialUtil : Application() {
             "0x1a1a1aff",
             "0xffffffff",
             "0xff0000ff",
-            18.0
+            18.0, false
         )
 
         lateinit var instance: CansatSerialUtil
@@ -52,56 +57,143 @@ class CansatSerialUtil : Application() {
 
     val ports = mutableMapOf<String, SerialPort>()
 
-    lateinit var stage: Stage
+    lateinit var stageMain: Stage
         private set
 
-    lateinit var controller: MainController
+    lateinit var stageGraph: Stage
+        private set
+
+    val graphPoints = mutableListOf<Point3D>()
+
+    val camera = PerspectiveCamera(true)
+
+    val cameraTransformer = CameraTransformer()
+
+    lateinit var controllerMain: ControllerMain
         private set
 
     val dataList = mutableListOf<DataHolder>()
 
-    val selectedPort get() = ports[controller.choicebox_port.value]
+    val selectedPort get() = ports[controllerMain.choicebox_port.value]
 
     var buf = mutableListOf<UByte>()
 
     val prompt = Prompt(this)
 
-    override fun start(stage: Stage) {
+    val doesShowAllRawData get() = controllerMain.radio_show_all_data.isSelected
+
+    /**
+     * called firstly.
+     */
+    override fun start(primaryStage: Stage) {
 
         instance = this
 
-        this.stage = stage
+        this.stageMain = primaryStage
 
-        stage.title = TITLE
+        stageMain.title = TITLE
 
-        stage.setOnCloseRequest {
-
+        stageMain.setOnCloseRequest {
             saveOptions()
+        }
+
+        stageGraph = Stage(StageStyle.UTILITY).apply {
+            initOwner(stageMain)
+        }
+
+        val loaderMain = FXMLLoader(ClassLoader.getSystemResource("tech/tohkatsu/cansat/main.fxml"))
+
+        stageMain.scene = Scene(loaderMain.load())
+
+        controllerMain = loaderMain.getController()
+
+        stageMain.scene.setOnKeyPressed {
+
+            when(it.code) {
+                KeyCode.BACK_SLASH -> {
+                    //for debug
+
+                    prompt.println("No debug program implemented")
+
+                }
+                else -> {}
+            }
 
         }
 
-        val loader = FXMLLoader(ClassLoader.getSystemResource("tech/tohkatsu/cansat/main.fxml"))
+        //graph start
 
-        stage.scene = Scene(loader.load<Pane>())
+        graphPoints += Point3D(-10.0, 0.0, 0.0)
+        graphPoints += Point3D(10.0, 0.0, 0.0)
 
-        controller = loader.getController()
+        stageGraph.title = "GRAPH"
+
+        camera.apply {
+
+            nearClip = 0.1
+            farClip = 10000.0
+            fieldOfView = 50.0
+            translateZ = -250.0
+
+        }
+
+        cameraTransformer.apply {
+
+            children += camera
+            rx.angle = -15.0
+
+        }
+
+        stageGraph.scene = Scene(Group(), 600.0, 600.0, true, SceneAntialiasing.BALANCED)
+        stageGraph.scene.fill = Color.BLACK
+        stageGraph.scene.camera = camera
+
+        stageGraph.scene.setOnKeyPressed {
+
+            println("pos: ${camera.translateX} ${camera.translateY} ${camera.translateZ}")
+
+            when(it.code) {
+                KeyCode.W -> camera.translateZ += 1
+                KeyCode.S -> camera.translateZ -= 1
+                KeyCode.D -> camera.translateX += 1
+                KeyCode.A -> camera.translateX -= 1
+                KeyCode.UP -> camera.translateY += 1
+                KeyCode.DOWN -> camera.translateY -= 1
+                else -> {}
+            }
+
+        }
+
+        //graph end
 
         loadOptions()
 
         //
 
-        stage.show()
+        stageMain.show()
+        stageGraph.show()
 
         updatePorts()
 
         object : AnimationTimer() {
             override fun handle(now: Long) {
-                loop()
+                loopMain()
+                loopGraph()
             }
         }.start()
 
-        prompt.println("PROGRAM STARTED...")
+        prompt.println("PROGRAM STARTED")
 
+        updateGraph()
+
+    }
+
+    fun updateGraph() {
+
+        val g = Group(PolyLine3D(graphPoints, 2.0f, Color.GREEN))
+
+        stageGraph.scene.root = g
+        
     }
 
     fun updatePorts() {
@@ -116,22 +208,22 @@ class CansatSerialUtil : Application() {
         else
             prompt.warningln("No ports found! press \"Update Ports\" button to recheck available ports.")
 
-        controller.choicebox_port.items.clear()
+        controllerMain.choicebox_port.items.clear()
 
         if(ports.size > 1) {
 
-            controller.choicebox_port.isDisable = false
-            controller.button_bar_send.isDisable = false
+            controllerMain.choicebox_port.isDisable = false
+            controllerMain.button_bar_send.isDisable = false
 
-            controller.choicebox_port.items.addAll(ports.keys)
+            controllerMain.choicebox_port.items.addAll(ports.keys)
 
         } else {
 
-            controller.choicebox_port.isDisable = true
-            controller.button_bar_send.isDisable = true
+            controllerMain.choicebox_port.isDisable = true
+            controllerMain.button_bar_send.isDisable = true
 
-            controller.choicebox_port.items.add("NO PORTS FOUND") // be careful!
-            controller.choicebox_port.value = "NO PORTS FOUND"
+            controllerMain.choicebox_port.items.add("NO PORTS FOUND") // be careful!
+            controllerMain.choicebox_port.value = "NO PORTS FOUND"
 
         }
 
@@ -142,10 +234,14 @@ class CansatSerialUtil : Application() {
      */
     fun onNewData(holder: DataHolder) {
 
-        if(holder.isCorrect)
-            prompt.println("RECEIVED: $holder")
-        else
-            prompt.warningln("RECEIVED: $holder")
+        if(doesShowAllRawData || dataFormat.deepEquals(holder.data.map { it.type })) {
+
+            if(holder.isCorrect)
+                prompt.println("RECEIVED: $holder")
+            else
+                prompt.warningln("RECEIVED: $holder")
+
+        }
 
     }
 
@@ -203,9 +299,9 @@ class CansatSerialUtil : Application() {
     /**
      * no side effects.
      */
-    fun parse(data: List<UByte>) : List<Any> {
+    fun parse(data: List<UByte>) : List<Data> {
 
-        val result = mutableListOf<Any>()
+        val result = mutableListOf<Data>()
 
         val d = ArrayList(data)
 
@@ -219,7 +315,7 @@ class CansatSerialUtil : Application() {
                 bytes += d.removeAt(0)
             }
 
-            result += type.convertFromBytes(bytes)
+            result += Data(type, type.convertFromBytes(bytes))
 
         }
 
@@ -241,16 +337,18 @@ class CansatSerialUtil : Application() {
     fun byte(int: UInt) = int.toUByte()
 
     fun updatePrompt() {
-        prompt.updateFontSize(controller.slider_fontsize.value)
+
+        prompt.updateFontSize(controllerMain.slider_fontsize.value)
 
         prompt.updateColor(
-            controller.color_picker_prompt_back.value,
-            controller.color_picker_prompt_text.value,
-            controller.color_picker_prompt_warning_text.value
+            controllerMain.color_picker_prompt_back.value,
+            controllerMain.color_picker_prompt_text.value,
+            controllerMain.color_picker_prompt_warning_text.value
         )
+
     }
 
-    fun loop() {
+    fun loopMain() {
 
         updatePrompt()
 
@@ -265,7 +363,7 @@ class CansatSerialUtil : Application() {
         buf.addAll(stream.readAllBytes().asList().map { it.toUByte() })
 
         //ignore until A5 5A (16)
-        while(buf.isEmpty() || buf.firstOrNull() != byte(0xA5u)) {
+        while(buf.isNotEmpty() && buf.firstOrNull() != byte(0xA5u)) {
             buf.removeAt(0)
         }
 
@@ -274,14 +372,16 @@ class CansatSerialUtil : Application() {
         //means it has least length of data
         while(buf.size > 6) {
 
-            //data length that follows later
-            val len = (buf[2] * 0x100u + buf[3] - 0x8000u).toInt()
+            //[0] A5 [1] 5A
+
+            //data seg length
+            val len = ((buf[2] - 0x80u) * 0x100u + buf[3]).toInt()
 
             //if there is full data
             if(buf.size >= len + 6) {
 
                 //omits the header(2bytes), length data(2bytes), checksum(1byte) and hooter(1byte)
-                val actualData = buf.subList(4, 4+len).toList()
+                val actualData = buf.subList(4, 4 + len).toList()
 
                 val holder = DataHolder(parse(actualData), xorChecksum(actualData) == buf[len + 4])
 
@@ -294,11 +394,17 @@ class CansatSerialUtil : Application() {
                 if(footer != byte(0x04u))
                     System.err.println("ILLEGAL FOOTER...")
 
-                buf = buf.subList(len + 6, buf.size)
+                buf = buf.subList(len + 6, buf.size)//remove taken data from buffer
 
             }
 
         }
+
+    }
+
+    fun loopGraph() {
+
+        updateGraph()
 
     }
 
@@ -310,17 +416,18 @@ class CansatSerialUtil : Application() {
             defaultConfig
         }
 
-        controller.applyConfig(config)
+        controllerMain.applyConfig(config)
 
     }
 
     fun saveOptions() {
 
         val config = Config(
-            controller.color_picker_prompt_back.value.toString(),
-            controller.color_picker_prompt_text.value.toString(),
-            controller.color_picker_prompt_warning_text.value.toString(),
-            controller.slider_fontsize.value
+                controllerMain.color_picker_prompt_back.value.toString(),
+                controllerMain.color_picker_prompt_text.value.toString(),
+                controllerMain.color_picker_prompt_warning_text.value.toString(),
+                controllerMain.slider_fontsize.value,
+                controllerMain.radio_show_all_data.isSelected
         )
 
         if(Files.notExists(pathOptionsFile))

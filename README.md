@@ -23,6 +23,25 @@ Sorry to say, the format is little ugly because one value uses 5 bytes.<br>
 |0x01|Unsigned Int(32bits)|
 |0x02|Float|
 
+# Expected Input
+`A5 5A 80 [J:1] [K:n] [L:1] 04`
+
+J: the length of `K` (=n)<br>
+K: Data section.<br>
+L: XOR checksum of `K`
+
+###K(Data Section) format
+`[M:1] A0 [N:1] [P:4] FF FF FF FF [Q:1] [R:2] [S:n]`
+
+M: Sender's logical ID<br>
+N: Response ID (unused)<br>
+P: Sender's extended ID (unused)<br>
+Q: LQI (Link Quality Indicator)<br>
+R: The length of `S`<br>
+S: The main data
+
 # Compile in your computer
-To compile this, you should add `lib` folder and put `jSerialComm-2.6.2.jar`.<br>
-refer: https://fazecast.github.io/jSerialComm/
+~~To compile this, you should add `lib` folder and put `jSerialComm-2.6.2.jar`.<br>
+refer: https://fazecast.github.io/jSerialComm/~~
+
+Now, it became unnecessary.

@@ -6,6 +6,7 @@
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.ColorPicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.SplitPane?>
@@ -19,7 +20,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.TextFlow?>
 
-<SplitPane dividerPositions="0.8" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="768.0" prefWidth="1024.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tech.tohkatsu.cansat.MainController">
+<SplitPane dividerPositions="0.8" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="768.0" prefWidth="1024.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tech.tohkatsu.cansat.ControllerMain">
    <items>
       <TabPane>
          <tabs>
@@ -85,13 +86,12 @@
         </rowConstraints>
          <children>
             <TextField fx:id="field_send" GridPane.columnIndex="2" GridPane.rowIndex="2" />
-            <VBox GridPane.columnIndex="1" GridPane.rowIndex="2" />
             <ChoiceBox fx:id="choicebox_port" disable="true" prefWidth="150.0" GridPane.rowIndex="1" />
             <TextField fx:id="field_py" editable="false" promptText="y" GridPane.columnIndex="2" />
             <TextField fx:id="field_pz" editable="false" promptText="z" GridPane.columnIndex="3" />
             <TextField fx:id="field_px" editable="false" promptText="x" GridPane.columnIndex="1" />
             <Label text="Position:" GridPane.halignment="RIGHT" />
-            <Button fx:id="button_update_port" mnemonicParsing="false" onAction="#onUpdatePorts" text="Update Ports" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Button fx:id="button_update_port" alignment="CENTER" mnemonicParsing="false" onAction="#onUpdatePorts" text="Update Ports" GridPane.columnIndex="1" GridPane.rowIndex="1" />
             <HBox prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="3" GridPane.rowIndex="2">
                <children>
                   <ButtonBar fx:id="button_bar_send" disable="true" prefHeight="40.0" prefWidth="200.0">
@@ -102,6 +102,7 @@
                   </ButtonBar>
                </children>
             </HBox>
+            <RadioButton fx:id="radio_show_all_data" mnemonicParsing="false" text="Show all raw data" GridPane.columnIndex="1" GridPane.rowIndex="2" />
          </children>
          <padding>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

@@ -6,7 +6,8 @@ import java.nio.file.StandardOpenOption
 
 data class Config(
     val colorPromptBackground: String, val colorPromptText: String,
-    val colorPromptWarningText: String, val font_size: Double
+    val colorPromptWarningText: String, val font_size: Double,
+    val doesShowAllRawData: Boolean
 ) {
 
     @ExperimentalUnsignedTypes

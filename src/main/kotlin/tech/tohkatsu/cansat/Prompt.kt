@@ -16,10 +16,12 @@ class Prompt(private val app: CansatSerialUtil) {
     var latestNormalFill = Color.WHITE!!
     var latestWarningFill = Color.RED!!
 
-    private val flow get() = app.controller.flow_prompt
+    private val flow get() = app.controllerMain.flow_prompt
 
     private fun getPrefixInfo(calendar: Calendar = Calendar.getInstance()) =
-            "[${calendar.get(Calendar.HOUR_OF_DAY)}:${calendar.get(Calendar.MINUTE)}:${calendar.get(Calendar.SECOND)}:${calendar.get(Calendar.MILLISECOND)}] "
+            String.format("[%tH:%tM:%tS:%tL] ",
+                calendar, calendar, calendar, calendar
+            )
 
     fun updateFontSize(size: Double) {
 

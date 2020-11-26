@@ -9,7 +9,7 @@ import java.net.URL
 import java.util.*
 
 @ExperimentalUnsignedTypes
-class MainController : Initializable {
+class ControllerMain : Initializable {
 
     @FXML
     lateinit var scrollpane_prompt: ScrollPane
@@ -62,6 +62,9 @@ class MainController : Initializable {
     lateinit var button_reset: Button
 
     @FXML
+    lateinit var radio_show_all_data: RadioButton
+
+    @FXML
     fun onUpdatePorts() {
         CansatSerialUtil.instance.updatePorts()
     }
@@ -87,6 +90,7 @@ class MainController : Initializable {
         color_picker_prompt_text.value = Color.WHITE
         color_picker_prompt_warning_text.value = Color.RED
         slider_fontsize.value = 18.0
+        radio_show_all_data.isSelected = false
 
     }
 
@@ -96,6 +100,7 @@ class MainController : Initializable {
         color_picker_prompt_text.value = Color.valueOf(config.colorPromptText)
         color_picker_prompt_warning_text.value = Color.valueOf(config.colorPromptWarningText)
         slider_fontsize.value = config.font_size
+        radio_show_all_data.isSelected = config.doesShowAllRawData
 
         CansatSerialUtil.instance.updatePrompt()
 
