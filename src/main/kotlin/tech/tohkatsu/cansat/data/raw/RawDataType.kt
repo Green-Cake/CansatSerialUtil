@@ -1,8 +1,8 @@
-package tech.tohkatsu.cansat
+package tech.tohkatsu.cansat.data.raw
 
 @ExperimentalUnsignedTypes
 @Suppress("EXPERIMENTAL_UNSIGNED_LITERALS")
-enum class DataType(val value: UByte, val bytes: Int) {
+enum class RawDataType(val value: UByte, val bytes: Int) {
     I32(0x01u, 2),
     FLOAT(0x02u, 2)
     ;
@@ -14,7 +14,7 @@ enum class DataType(val value: UByte, val bytes: Int) {
 
     companion object {
 
-        fun getByIDValue(id: UByte) = DataType.values().firstOrNull { it.value == id }
+        fun getByIDValue(id: UByte) = RawDataType.values().firstOrNull { it.value == id }
 
     }
 }

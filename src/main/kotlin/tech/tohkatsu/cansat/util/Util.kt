@@ -1,4 +1,4 @@
-package tech.tohkatsu.cansat
+package tech.tohkatsu.cansat.util
 
 fun <T> List<T>.deepEquals(other: List<T>): Boolean {
 

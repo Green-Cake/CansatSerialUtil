@@ -16,10 +16,9 @@ repositories {
 dependencies {
 
     implementation 'com.fazecast:jSerialComm:[2.0.0,3.0.0)'
-    implementation 'org.jzy3d:jzy3d-jdt-core:1.0.2'
-    implementation 'org.fxyz3d:fxyz3d:0.5.2'
     implementation 'com.google.code.gson:gson:2.4'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'A:/Program/_OUTSIDE_APIs/lwjgl', include: '**/*.jar')
 
 }
 

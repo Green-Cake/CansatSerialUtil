@@ -1,4 +1,4 @@
-package tech.tohkatsu.cansat
+package tech.tohkatsu.cansat.util
 
 @ExperimentalUnsignedTypes
 enum class Address(val value: UByte) {

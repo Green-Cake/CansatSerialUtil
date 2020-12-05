@@ -5,6 +5,7 @@ import javafx.fxml.Initializable
 import javafx.scene.control.*
 import javafx.scene.paint.Color
 import javafx.scene.text.TextFlow
+import tech.tohkatsu.cansat.util.Address
 import java.net.URL
 import java.util.*
 

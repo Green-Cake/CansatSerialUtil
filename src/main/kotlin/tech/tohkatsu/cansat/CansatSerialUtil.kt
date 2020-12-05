@@ -7,20 +7,19 @@ import javafx.application.Application
 import javafx.fxml.FXMLLoader
 import javafx.scene.*
 import javafx.scene.input.KeyCode
-import javafx.scene.paint.Color
-import javafx.scene.shape.Box
 import javafx.stage.Stage
-import javafx.stage.StageStyle
-import org.fxyz3d.geometry.Point3D
-import org.fxyz3d.shapes.composites.PolyLine3D
-import org.fxyz3d.utils.CameraTransformer
+import tech.tohkatsu.cansat.data.ParsedData
+import tech.tohkatsu.cansat.data.raw.RawData
+import tech.tohkatsu.cansat.data.raw.RawDataHolder
+import tech.tohkatsu.cansat.data.raw.RawDataType
+import tech.tohkatsu.cansat.graph.AppGraph
+import tech.tohkatsu.cansat.util.*
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.random.Random
-import kotlin.random.nextUInt
+import kotlin.concurrent.thread
 
 @ExperimentalUnsignedTypes
 class CansatSerialUtil : Application() {
@@ -32,7 +31,7 @@ class CansatSerialUtil : Application() {
 
         //----- unused now...
         val dataFormat = listOf(
-            DataType.FLOAT, /* elapsed time */
+            RawDataType.FLOAT, /* elapsed time */
         )
         //-----
 
@@ -60,19 +59,16 @@ class CansatSerialUtil : Application() {
     lateinit var stageMain: Stage
         private set
 
-    lateinit var stageGraph: Stage
-        private set
+    val appGraph = AppGraph()
 
-    val graphPoints = mutableListOf<Point3D>()
-
-    val camera = PerspectiveCamera(true)
-
-    val cameraTransformer = CameraTransformer()
+    //
 
     lateinit var controllerMain: ControllerMain
         private set
 
-    val dataList = mutableListOf<DataHolder>()
+    val rawDataList = mutableListOf<RawDataHolder>()
+
+    val parsedDataList = mutableListOf<ParsedData>()
 
     val selectedPort get() = ports[controllerMain.choicebox_port.value]
 
@@ -81,6 +77,8 @@ class CansatSerialUtil : Application() {
     val prompt = Prompt(this)
 
     val doesShowAllRawData get() = controllerMain.radio_show_all_data.isSelected
+
+    //
 
     /**
      * called firstly.
@@ -94,11 +92,8 @@ class CansatSerialUtil : Application() {
         stageMain.title = TITLE
 
         stageMain.setOnCloseRequest {
+            appGraph.close()
             saveOptions()
-        }
-
-        stageGraph = Stage(StageStyle.UTILITY).apply {
-            initOwner(stageMain)
         }
 
         val loaderMain = FXMLLoader(ClassLoader.getSystemResource("tech/tohkatsu/cansat/main.fxml"))
@@ -121,79 +116,28 @@ class CansatSerialUtil : Application() {
 
         }
 
-        //graph start
-
-        graphPoints += Point3D(-10.0, 0.0, 0.0)
-        graphPoints += Point3D(10.0, 0.0, 0.0)
-
-        stageGraph.title = "GRAPH"
-
-        camera.apply {
-
-            nearClip = 0.1
-            farClip = 10000.0
-            fieldOfView = 50.0
-            translateZ = -250.0
-
-        }
-
-        cameraTransformer.apply {
-
-            children += camera
-            rx.angle = -15.0
-
-        }
-
-        stageGraph.scene = Scene(Group(), 600.0, 600.0, true, SceneAntialiasing.BALANCED)
-        stageGraph.scene.fill = Color.BLACK
-        stageGraph.scene.camera = camera
-
-        stageGraph.scene.setOnKeyPressed {
-
-            println("pos: ${camera.translateX} ${camera.translateY} ${camera.translateZ}")
-
-            when(it.code) {
-                KeyCode.W -> camera.translateZ += 1
-                KeyCode.S -> camera.translateZ -= 1
-                KeyCode.D -> camera.translateX += 1
-                KeyCode.A -> camera.translateX -= 1
-                KeyCode.UP -> camera.translateY += 1
-                KeyCode.DOWN -> camera.translateY -= 1
-                else -> {}
-            }
-
-        }
-
-        //graph end
-
         loadOptions()
 
         //
 
         stageMain.show()
-        stageGraph.show()
 
         updatePorts()
 
         object : AnimationTimer() {
             override fun handle(now: Long) {
                 loopMain()
-                loopGraph()
             }
         }.start()
 
         prompt.println("PROGRAM STARTED")
 
-        updateGraph()
+        //
 
-    }
+        thread {
+            appGraph.run()
+        }
 
-    fun updateGraph() {
-
-        val g = Group(PolyLine3D(graphPoints, 2.0f, Color.GREEN))
-
-        stageGraph.scene.root = g
-        
     }
 
     fun updatePorts() {
@@ -232,7 +176,7 @@ class CansatSerialUtil : Application() {
     /**
      * called when received new data.
      */
-    fun onNewData(holder: DataHolder) {
+    fun onNewData(holder: RawDataHolder) {
 
         if(doesShowAllRawData || dataFormat.deepEquals(holder.data.map { it.type })) {
 
@@ -299,15 +243,15 @@ class CansatSerialUtil : Application() {
     /**
      * no side effects.
      */
-    fun parse(data: List<UByte>) : List<Data> {
+    fun parse(data: List<UByte>) : List<RawData> {
 
-        val result = mutableListOf<Data>()
+        val result = mutableListOf<RawData>()
 
         val d = ArrayList(data)
 
         while(d.isNotEmpty()) {
 
-            val type = DataType.getByIDValue(d.removeAt(0)) ?: return emptyList()
+            val type = RawDataType.getByIDValue(d.removeAt(0)) ?: return emptyList()
 
             val bytes = mutableListOf<UByte>()
 
@@ -315,7 +259,7 @@ class CansatSerialUtil : Application() {
                 bytes += d.removeAt(0)
             }
 
-            result += Data(type, type.convertFromBytes(bytes))
+            result += RawData(type, type.convertFromBytes(bytes))
 
         }
 
@@ -383,11 +327,11 @@ class CansatSerialUtil : Application() {
                 //omits the header(2bytes), length data(2bytes), checksum(1byte) and hooter(1byte)
                 val actualData = buf.subList(4, 4 + len).toList()
 
-                val holder = DataHolder(parse(actualData), xorChecksum(actualData) == buf[len + 4])
+                val holder = RawDataHolder(parse(actualData), xorChecksum(actualData) == buf[len + 4])
 
                 onNewData(holder)
 
-                dataList += holder
+                rawDataList += holder
 
                 val footer = buf[len + 5]
 
@@ -399,12 +343,6 @@ class CansatSerialUtil : Application() {
             }
 
         }
-
-    }
-
-    fun loopGraph() {
-
-        updateGraph()
 
     }
 
