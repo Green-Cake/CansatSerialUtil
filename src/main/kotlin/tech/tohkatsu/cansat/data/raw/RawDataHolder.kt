@@ -1,5 +1,7 @@
 package tech.tohkatsu.cansat.data.raw
 
+import tech.tohkatsu.cansat.data.ParsedData
+
 @ExperimentalUnsignedTypes
 class RawDataHolder(val data: List<RawData>, val isCorrect: Boolean) {
 
@@ -15,18 +17,10 @@ class RawDataHolder(val data: List<RawData>, val isCorrect: Boolean) {
 
     }
 
-    fun parse() {
-
-        val time = data[0].value as Float
-
-        val ax = data[1].value as Float
-        val ay = data[2].value as Float
-        val az = data[3].value as Float
-
-        val gx = data[4].value as Float
-        val gy = data[5].value as Float
-        val gz = data[6].value as Float
-
-    }
+    fun parse() = ParsedData(
+        data[0].value as Float,
+        data[1].value as Float, data[2].value as Float, data[3].value as Float,
+        data[4].value as Float, data[5].value as Float, data[6].value as Float
+    )
 
 }

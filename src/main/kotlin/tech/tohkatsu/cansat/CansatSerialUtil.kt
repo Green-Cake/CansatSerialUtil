@@ -140,6 +140,9 @@ class CansatSerialUtil : Application() {
 
     }
 
+    /**
+     * Recheck and apply the ports which the machine recognizes.
+     */
     fun updatePorts() {
 
         ports.clear()
@@ -189,7 +192,12 @@ class CansatSerialUtil : Application() {
 
     }
 
-    fun sendTo(address: Address, raw: String) {
+    /**
+     * Sends the data to the twe-lite specified by [address].
+     * @param address the destination's address.
+     * @param raw the string which expresses the data.
+     */
+    fun sendData(address: Address, raw: String) {
 
         val data = mutableListOf<UByte>()
 
@@ -208,11 +216,16 @@ class CansatSerialUtil : Application() {
 
         }
 
-        sendTo(address, data)
+        sendData(address, data)
 
     }
 
-    fun sendTo(address: Address, data: List<UByte>) {
+    /**
+     * Sends the data to the twe-lite specified by [address].
+     * @param address the destination's address.
+     * @param data the data, [UByte] list.
+     */
+    fun sendData(address: Address, data: List<UByte>) {
 
         if(selectedPort == null)
             return

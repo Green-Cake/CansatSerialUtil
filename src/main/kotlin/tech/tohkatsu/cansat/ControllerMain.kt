@@ -72,12 +72,12 @@ class ControllerMain : Initializable {
 
     @FXML
     fun onSendAlpha() {
-        CansatSerialUtil.instance.sendTo(Address.ALPHA, field_send.text)
+        CansatSerialUtil.instance.sendData(Address.ALPHA, field_send.text)
     }
 
     @FXML
     fun onSendBeta() {
-        CansatSerialUtil.instance.sendTo(Address.BETA, field_send.text)
+        CansatSerialUtil.instance.sendData(Address.BETA, field_send.text)
     }
 
     @FXML

@@ -7,14 +7,15 @@ enum class RawDataType(val value: UByte, val bytes: Int) {
     FLOAT(0x02u, 2)
     ;
 
+    companion object {
+
+        fun getByIDValue(id: UByte) = values().firstOrNull { it.value == id }
+
+    }
+
     fun convertFromBytes(bytes: List<UByte>): Any = when(this) {
         I32 -> bytes[0] * 0x100u + bytes[1]
         FLOAT -> Float.fromBits((bytes[0] * 0x100u + bytes[1]).toInt())
     }
 
-    companion object {
-
-        fun getByIDValue(id: UByte) = RawDataType.values().firstOrNull { it.value == id }
-
-    }
 }
